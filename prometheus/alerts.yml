@@ -1,0 +1,13 @@
+groups:
+  - name: book_management_alerts
+    rules:
+      - alert: LayananBookManagementMati
+        expr: up{job=~"book-management-backend|cadvisor|node-exporter"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Layanan {{ $labels.job }} tidak aktif (DOWN)"
+          description: "Target {{ $labels.instance }} pada job {{ $labels.job }} terdeteksi tidak dapat dihubungi oleh Prometheus selama lebih dari 30 detik."
+          tindakan_pertama: "Segera periksa status container dengan perintah `docker compose ps`, cek log error terakhir menggunakan `docker compose logs --tail=50 <nama_service>`, lalu lakukan restart layanan dengan `docker compose restart <nama_service>`."
+

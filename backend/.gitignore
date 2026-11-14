@@ -27,3 +27,6 @@ Homestead.yaml
 Thumbs.db
 backend/vendor/
 backend/.env
+
+AGENTS.md
+CLAUDE.md
