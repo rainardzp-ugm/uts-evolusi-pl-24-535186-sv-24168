@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class BookController extends Controller
 {
@@ -12,28 +14,48 @@ class BookController extends Controller
     public function index()
     {
         $books = Book::latest()->get();
+
         return response()->json([
             'success' => true,
-            'data' => $books
+            'data' => $books,
         ], 200);
     }
 
     // Tambah Data (POST) -> Return 201 Created
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'year' => 'required|integer',
             'stock' => 'required|integer|min:0',
         ]);
 
+        if ($validator->fails()) {
+            Log::warning('Book validation failed', [
+                'actor' => $request->user() ? 'authenticated_user' : 'guest',
+                'action' => 'create book',
+                'reason' => 'request validation failed',
+                'fields' => array_keys($validator->errors()->toArray()),
+            ]);
+
+            $validator->validate();
+        }
+
+        $validated = $validator->validated();
         $book = Book::create($validated);
+
+        Log::info('Book saved', [
+            'actor' => $request->user() ? 'authenticated_user' : 'guest',
+            'action' => 'create book',
+            'reason' => 'book created successfully',
+            'book_id' => $book->getKey(),
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Buku berhasil ditambahkan',
-            'data' => $book
+            'data' => $book,
         ], 201);
     }
 
@@ -42,16 +64,16 @@ class BookController extends Controller
     {
         $book = Book::find($id);
 
-        if (!$book) {
+        if (! $book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buku tidak ditemukan'
+                'message' => 'Buku tidak ditemukan',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $book
+            'data' => $book,
         ], 200);
     }
 
@@ -60,10 +82,10 @@ class BookController extends Controller
     {
         $book = Book::find($id);
 
-        if (!$book) {
+        if (! $book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buku tidak ditemukan'
+                'message' => 'Buku tidak ditemukan',
             ], 404);
         }
 
@@ -79,7 +101,7 @@ class BookController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Buku berhasil diperbarui',
-            'data' => $book
+            'data' => $book,
         ], 200);
     }
 
@@ -88,10 +110,10 @@ class BookController extends Controller
     {
         $book = Book::find($id);
 
-        if (!$book) {
+        if (! $book) {
             return response()->json([
                 'success' => false,
-                'message' => 'Buku tidak ditemukan'
+                'message' => 'Buku tidak ditemukan',
             ], 404);
         }
 
@@ -99,7 +121,7 @@ class BookController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Buku berhasil dihapus'
+            'message' => 'Buku berhasil dihapus',
         ], 200);
     }
 }
